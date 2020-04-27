@@ -13,10 +13,10 @@ mongodb.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: t
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.get('/', (req, res) => {
-            db.collection("items").find().toArray(function(err, items) {
+    db.collection("items").find().toArray(function(err, items) {
 
 
-                        res.send(`
+        res.send(`
           <!DOCTYPE html>
       <html>
       <head>
@@ -39,20 +39,14 @@ app.get('/', (req, res) => {
           </div>
           
           <ul id="item-list" class="list-group pb-5">
-           ${items.map(function(item){
-             return `<li class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
-             <span class="item-text">${item.text}</span>
-             <div>
-             <button data-id="${item._id}"class="edit-me btn btn-secondary btn-sm mr-1">Edit</button>
-             <button data-id="${item._id}" class="delete-me btn btn-danger btn-sm">Delete</button>
-             </div>
-             </li>`
-            }).join(" ")}
+           
           </ul>
           
         </div>
+        <script>
+            let items=${JSON.stringify(items)}
+        </script>
         <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-
         <script src="/browser.js"></script>
       </body>
       </html>
@@ -61,19 +55,19 @@ app.get('/', (req, res) => {
 })
 
 app.post("/create-item", (req, res) => {
-    db.collection("items").insertOne({ text: req.body.text }, function(err,info) {
+    db.collection("items").insertOne({ text: req.body.text }, function(err, info) {
         res.json(info.ops[0])
     })
 })
 
-app.post('/update-item',function(req,res){
-  db.collection("items").findOneAndUpdate({_id: new mongodb.ObjectID(req.body.id)},{$set: {text: req.body.text}},function(){
-    res.send("Sucess")
-  })
+app.post('/update-item', function(req, res) {
+    db.collection("items").findOneAndUpdate({ _id: new mongodb.ObjectID(req.body.id) }, { $set: { text: req.body.text } }, function() {
+        res.send("Sucess")
+    })
 })
 
-app.post("/delete-item", function(req,res){
-  db.collection('items').deleteOne({_id: new mongodb.ObjectID(req.body.id)}, function(){
-    res.send("Sucess")
-  })
+app.post("/delete-item", function(req, res) {
+    db.collection('items').deleteOne({ _id: new mongodb.ObjectID(req.body.id) }, function() {
+        res.send("Sucess")
+    })
 })

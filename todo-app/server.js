@@ -1,5 +1,6 @@
 let express = require('express')
 let mongodb = require("mongodb")
+let sanitizeHTML = require("sanitize-html")
 let app = express()
 let db
 
@@ -12,6 +13,16 @@ mongodb.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: t
 })
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
+
+function passwordProtected(req, res, next) {
+    res.set("www-Authenticate", 'Basic realm="Simple Todo app"')
+    if (req.headers.authorization == "Basic YWRtaW46YWRtaW4=") {
+        next()
+    } else {
+        res.status(401).send("Authentication required")
+    }
+}
+app.use(passwordProtected)
 app.get('/', (req, res) => {
     db.collection("items").find().toArray(function(err, items) {
 
@@ -55,18 +66,22 @@ app.get('/', (req, res) => {
 })
 
 app.post("/create-item", (req, res) => {
+
+    let safeText = sanitizeHTML(req.body.text, { allowedTags: [], allowedAttributes: {} })
     db.collection("items").insertOne({ text: req.body.text }, function(err, info) {
         res.json(info.ops[0])
     })
 })
 
 app.post('/update-item', function(req, res) {
+    let safeText = sanitizeHTML(req.body.text, { allowedTags: [], allowedAttributes: {} })
     db.collection("items").findOneAndUpdate({ _id: new mongodb.ObjectID(req.body.id) }, { $set: { text: req.body.text } }, function() {
         res.send("Sucess")
     })
 })
 
 app.post("/delete-item", function(req, res) {
+    let safeText = sanitizeHTML(req.body.text, { allowedTags: [], allowedAttributes: {} })
     db.collection('items').deleteOne({ _id: new mongodb.ObjectID(req.body.id) }, function() {
         res.send("Sucess")
     })

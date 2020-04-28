@@ -3,13 +3,17 @@ let mongodb = require("mongodb")
 let sanitizeHTML = require("sanitize-html")
 let app = express()
 let db
+let port = process.env.PORT
+if (port == null || port == "") {
+    port = 3000
+}
 
 app.use(express.static("public"))
 let connectionString = "mongodb+srv://nick:nick1234@cluster0-1lqds.mongodb.net/TodoDB?retryWrites=true&w=majority"
     //let connectionString = "mongodb://localhost/TodoDB?retryWrites=true&w=majority"  //connectionstring for local mongo db
 mongodb.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
     db = client.db()
-    app.listen(3000)
+    app.listen(port)
 })
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))

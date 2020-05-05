@@ -55,13 +55,15 @@ User.prototype.validate = function() {
     }
 }
 
-User.prototype.login = function() {
-    usersCollection.findOne({ username: this.data.username }, (err, attemptedUser) => {
-        if (attemptedUser && attemptedUser.password == this.data.password) {
-            callback("Congrats")
-        } else {
-            callback("Invalid username or password.")
-        }
+User.prototype.login = function(callback) {
+    return new Promise((resovle, reject) => {
+        usersCollection.findOne({ username: this.data.username }, (err, attemptedUser) => {
+            if (attemptedUser && attemptedUser.password == this.data.password) {
+                resovle("Congrats")
+            } else {
+                reject("Invalid username or password.")
+            }
+        })
     })
 }
 

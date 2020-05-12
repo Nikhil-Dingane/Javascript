@@ -18,6 +18,7 @@ exports.login = function(req, res) {
             username: user.data.username,
             _id: user.data._id
         }
+
         req.session.save(function() {
             res.redirect("/")
         })

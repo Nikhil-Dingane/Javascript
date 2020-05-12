@@ -3,9 +3,11 @@ const usersCollection = require("../db").db().collection("users")
 const validator = require("validator")
 const md5 = require("md5")
 
-let User = function(data) {
+let User = function(data, getAvatar) {
     this.data = data
     this.errors = []
+    if (getAvatar == undefined) { getAvatar = false }
+    if (getAvatar) { this.getAvatar() }
 }
 
 User.prototype.cleanUp = function() {
@@ -79,6 +81,7 @@ User.prototype.login = function(callback) {
     return new Promise((resovle, reject) => {
         usersCollection.findOne({ username: this.data.username }, (err, attemptedUser) => {
             if (attemptedUser && bcrypt.compareSync(this.data.password, attemptedUser.password)) {
+                this.data._id = attemptedUser._id
                 this.getAvatar()
                 resovle("Congrats")
             } else {

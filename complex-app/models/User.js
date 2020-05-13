@@ -81,7 +81,7 @@ User.prototype.login = function(callback) {
     return new Promise((resovle, reject) => {
         usersCollection.findOne({ username: this.data.username }, (err, attemptedUser) => {
             if (attemptedUser && bcrypt.compareSync(this.data.password, attemptedUser.password)) {
-                this.data._id = attemptedUser._id
+                this.data = attemptedUser
                 this.getAvatar()
                 resovle("Congrats")
             } else {
@@ -101,8 +101,9 @@ User.prototype.register = function() {
             // hash user password 
             let salt = bcrypt.genSaltSync(10)
             this.data.password = bcrypt.hashSync(this.data.password, salt)
-            await usersCollection.insertOne(this.data);
             this.getAvatar()
+            await usersCollection.insertOne(this.data);
+
             resolve()
         } else {
             reject(this.errors)
@@ -113,7 +114,36 @@ User.prototype.register = function() {
 
 User.prototype.getAvatar = function() {
 
+    this.data.avatar = `https://gravatar.com/avatar/${this.data.email}?s=128`
     this.avatar = `https://gravatar.com/avatar/${this.data.email}?s=128`
+}
+
+User.findByUserName = function(username) {
+    return new Promise((resolve, reject) => {
+        if (typeof(username) != "string") {
+            reject()
+            return
+        }
+        usersCollection.findOne({ username: username }).then(function(userDoc) {
+            if (userDoc) {
+                userDoc = new User(userDoc, true)
+                userDoc = {
+                    _id: userDoc.data._id,
+                    username: userDoc.data.username,
+                    avatar: userDoc.data.avatar
+                }
+
+                resolve(userDoc)
+                return
+            } else {
+
+                reject()
+            }
+        }).catch(function() {
+
+            reject()
+        })
+    })
 }
 
 module.exports = User

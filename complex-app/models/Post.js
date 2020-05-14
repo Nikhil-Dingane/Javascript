@@ -1,10 +1,11 @@
 const postsCollection = require("../db").db().collection("posts")
 const ObjectID = require("mongodb").ObjectID
 const User = require("./User")
-let Post = function(data, userid) {
+let Post = function(data, userid, requestedPostId) {
     this.data = data
     this.errors = []
     this.userid = userid
+    this.requestedPostId = requestedPostId
 }
 
 Post.prototype.cleanUp = function() {
@@ -42,7 +43,39 @@ Post.prototype.create = function() {
     })
 }
 
-Post.findSingleById = function(id) {
+Post.prototype.update = function() {
+    return new Promise(async(resolve, reject) => {
+        try {
+            let post = await Post.findSingleById(this.requestedPostId, this.userid)
+            if (post.isVisitorOwner) {
+                //actually update the db
+                let status = await this.actuallyUpdate()
+                resolve(status)
+                resolve()
+            } else {
+                reject()
+            }
+
+        } catch {
+            reject()
+        }
+    })
+}
+
+Post.prototype.actuallyUpdate = function() {
+    return new Promise(async(resolve, reject) => {
+        this.cleanUp()
+        this.validate()
+
+        if (!this.errors.length) {
+            await postsCollection.findOneAndUpdate({ _id: new ObjectID(this.requestedPostId) }, { $set: { title: this.data.title, body: this.data.body } })
+            resolve("success")
+        } else {
+            resolve("failure")
+        }
+    })
+}
+Post.findSingleById = function(id, visitorId) {
     return new Promise(async(resolve, reject) => {
         if (typeof(id) != "string" || !ObjectID.isValid(id)) {
             reject()
@@ -56,6 +89,7 @@ Post.findSingleById = function(id) {
                     title: 1,
                     body: 1,
                     createdDate: 1,
+                    authorId: "$author",
                     author: { $arrayElemAt: ["$authorDocument", 0] }
                 }
             }
@@ -63,7 +97,7 @@ Post.findSingleById = function(id) {
 
         //clean up author property in each post object 
         posts = posts.map(function(post) {
-
+            post.isVisitorOwner = post.authorId.equals(visitorId)
             post.author = {
                 username: post.author.username,
                 avatar: new User(post.author, true).avatar
@@ -108,5 +142,7 @@ Post.fincByAuthorId = function(authorId) {
         resolve(posts)
     })
 }
+
+
 
 module.exports = Post

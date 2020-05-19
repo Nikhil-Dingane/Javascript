@@ -1,3 +1,4 @@
+import axios from 'axios'
 export default class Search {
     // 1. select DOM elements, and keep track of any useful data
     constructor() {
@@ -5,12 +6,20 @@ export default class Search {
         this.headerSearchIcon = document.querySelector(".header-search-icon")
         this.overlay = document.querySelector(".search-overlay")
         this.closeIcon = document.querySelector(".close-live-search")
+        this.inputField = document.querySelector("#live-search-field")
+        this.resultsArea = document.querySelector("live-search-results")
+        this.loaderIcon = document.querySelector(".circle-loader")
+        this.typingWaitTimer
+        this.previousValue = ""
         this.events()
     }
 
     // 2. Events
 
     events() {
+
+        this.inputField.addEventListener("keyup", (e) => { this.keyPressHandler() })
+
         this.closeIcon.addEventListener("click", () => {
             this.closeOverLay()
         })
@@ -21,6 +30,31 @@ export default class Search {
     }
 
     // 3. Methods
+
+    keyPressHandler() {
+        let value = this.inputField.value
+
+        if (value != "" && value != this.previousValue) {
+            clearTimeout(this.typingWaitTimer)
+            this.showLoaderIcon()
+            this.typingWaitTimer = setTimeout(() => this.sendRequest(), 3000)
+        }
+
+        this.previousValue = value
+    }
+
+    sendRequest() {
+        axios.post("/search", { searchTerm: this.inputField.value }).then(() => {
+
+        }).catch(() => {
+            alert("Hello the request failed.")
+        })
+    }
+    showLoaderIcon() {
+
+        this.loaderIcon.classList.add("circle-loader--visible")
+    }
+
     openOverlay() {
         this.overlay.classList.add("search-overlay--visible")
 
@@ -28,7 +62,7 @@ export default class Search {
 
     closeOverLay() {
         this.overlay.classList.remove("search-overlay--visible")
-
+        setTimeout(() => this.inputField.focus(), 50)
     }
 
     injectHTML() {
@@ -44,8 +78,8 @@ export default class Search {
       
           <div class="search-overlay-bottom">
             <div class="container container--narrow py-3">
-              <div class="circle-loader"></div>
-              <div class="live-search-results live-search-results--visible">
+              <div class="circle-loader "></div>
+              <div class="live-search-results ">
                 <div class="list-group shadow-sm">
                   <div class="list-group-item active"><strong>Search Results</strong> (4 items found)</div>
       

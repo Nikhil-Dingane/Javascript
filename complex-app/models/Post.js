@@ -1,4 +1,5 @@
 const postsCollection = require("../db").db().collection("posts")
+const followsCollection = require("../db").db().collection("follows")
 const ObjectID = require("mongodb").ObjectID
 const User = require("./User")
 const sanitizeHTML = require("sanitize-html")
@@ -190,6 +191,55 @@ Post.search = function(searchTerm) {
             resolve(posts)
         } else {
             reject()
+        }
+    })
+}
+
+Post.countPostsByAuthor = function(id) {
+    return new Promise(async(resolve, reject) => {
+        let postCount = await postsCollection.countDocuments({ author: id })
+        resolve(postCount)
+    })
+}
+
+Post.getFeed = async function(id) {
+
+    // create an array of the user ids that the current user follows
+    let followedUsers = await followsCollection.find({ authorId: new ObjectID(id) }).toArray()
+    console.log(id)
+    followedUsers = followedUsers.map(function(followDoc) {
+        return followDoc.followedId
+    })
+
+    // look for posts where the author is in the above array of follwed users
+    return new Promise(async(resolve, reject) => {
+        try {
+            let posts = await postsCollection.aggregate([
+                { $match: { author: { $in: followedUsers } } },
+                { $sort: { createdDate: -1 } },
+                { $lookup: { from: "users", localField: "author", foreignField: "_id", as: "authorDocument" } },
+                {
+                    $project: {
+                        title: 1,
+                        body: 1,
+                        createdDate: 1,
+                        author: { $arrayElemAt: ["$authorDocument", 0] }
+                    }
+                }
+            ]).toArray()
+
+            posts = posts.map(function(post) {
+                // post.authorId = undefined
+                post.author = {
+                    username: post.author.username,
+                    avatar: new User(post.author, true).avatar
+                }
+                return post
+            })
+
+            resolve(posts)
+        } catch (e) {
+            reject(e)
         }
     })
 }

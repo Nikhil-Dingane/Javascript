@@ -206,7 +206,7 @@ Post.getFeed = async function(id) {
 
     // create an array of the user ids that the current user follows
     let followedUsers = await followsCollection.find({ authorId: new ObjectID(id) }).toArray()
-    console.log(id)
+
     followedUsers = followedUsers.map(function(followDoc) {
         return followDoc.followedId
     })

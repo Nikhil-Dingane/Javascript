@@ -88,13 +88,13 @@ exports.home = async function(req, res) {
         // fetch feed of posts for current user
         try {
             let posts = await Post.getFeed(req.session.user._id)
-            res.render("home-dashboard", { posts: posts })
+            res.render("home-dashboard", { posts: posts, title: "Home-Dashboard" })
         } catch (e) {
             console.log(e)
         }
 
     } else {
-        res.render("home-guest", { regErrors: req.flash('regErrors') })
+        res.render("home-guest", { regErrors: req.flash('regErrors'), title: "Home" })
     }
 }
 
@@ -111,6 +111,7 @@ exports.profilePostsScreen = function(req, res) {
 
     Post.fincByAuthorId(req.profileUser._id).then(function(posts) {
         res.render("../views/profile", {
+            title: `Profile for ${req.profileUser.username}`,
             currentPage: "posts",
             posts: posts,
             profileUsername: req.profileUser.username,

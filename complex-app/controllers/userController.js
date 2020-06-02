@@ -1,6 +1,7 @@
 const User = require("../models/User")
 const Post = require("../models/Post")
 const Follow = require("../models/Follow")
+const jwt = require("jsonwebtoken")
 
 exports.doesUsernameExist = function(req, res) {
     User.findByUserName(req.body.username).then(() => {
@@ -76,7 +77,7 @@ exports.login = function(req, res) {
 exports.apiLogin = function(req, res) {
     let user = new User(req.body)
     user.login().then(function(result) {
-        res.json("Good job, that is a real username and passoword")
+        res.json(jwt.sign({ _id: user.data._id }, process.env.JWTSECRET, { expiresIn: '7d' }))
 
     }).catch(function(e) {
         res.json("Sorry, your values are not correct.")
